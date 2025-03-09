@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyCeNLiWVSj_Sg78f_g8W_OdpJvyUEN7AGc</string>
+	<key>GCM_SENDER_ID</key>
+	<string>739934329938</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.uprmonline.uprmChat</string>
+	<key>PROJECT_ID</key>
+	<string>team3chat-8b26c</string>
+	<key>STORAGE_BUCKET</key>
+	<string>team3chat-8b26c.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:739934329938:ios:e9c44b6a7ea6d58b73138b</string>
+</dict>
+</plist>

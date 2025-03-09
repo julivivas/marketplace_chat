@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.uprm_online.uprm_chat"
+    namespace = "com.uprm_online.team3chat"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
