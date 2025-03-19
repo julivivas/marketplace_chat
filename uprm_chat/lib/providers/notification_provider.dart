@@ -19,15 +19,12 @@ class NotificationProvider extends ChangeNotifier {
       _userNotifications[receiverID] = [];
     }
 
-    // Check if sender already has an unread notification
     int index = _userNotifications[receiverID]!
         .indexWhere((n) => n['senderEmail'] == senderEmail);
 
     if (index != -1) {
-      // If sender already has an unread notification, increase the count
       _userNotifications[receiverID]![index]['count'] += 1;
     } else {
-      // Otherwise, add a new notification entry
       _userNotifications[receiverID]!.add({
         'senderEmail': senderEmail,
         'count': 1,
@@ -43,5 +40,13 @@ class NotificationProvider extends ChangeNotifier {
       _userNotifications[userID]!.clear();
     }
     notifyListeners();
+  }
+
+  // ✅ NEW: Remove notifications from a specific sender when chat is opened
+  void markMessagesFromSenderAsRead(String userID, String senderEmail) {
+    if (_userNotifications.containsKey(userID)) {
+      _userNotifications[userID]!.removeWhere((n) => n['senderEmail'] == senderEmail);
+      notifyListeners();
+    }
   }
 }
