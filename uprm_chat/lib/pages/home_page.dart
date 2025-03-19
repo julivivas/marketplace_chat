@@ -28,12 +28,12 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // ✅ Adjusted Notification Icon Placement
+  // ✅ Notification Icon (bell + unread count)
   Widget _buildNotificationIcon(BuildContext context) {
     return Consumer<NotificationProvider>(
       builder: (context, notifier, child) {
         return Stack(
-          clipBehavior: Clip.none, // Prevents cut-off
+          clipBehavior: Clip.none,
           children: [
             IconButton(
               icon: const Icon(Icons.notifications),
@@ -43,14 +43,15 @@ class HomePage extends StatelessWidget {
             ),
             if (notifier.unreadCount > 0)
               Positioned(
-                right: 25, // ✅ Moves badge to the left
-                top: 8,
+                right: 30, // ✅ Move left
+                top: 10,
                 child: CircleAvatar(
                   radius: 9, // ✅ Adjusted size
                   backgroundColor: Colors.red,
                   child: Text(
                     notifier.unreadCount.toString(),
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -66,24 +67,35 @@ class HomePage extends StatelessWidget {
       context: context,
       builder: (context) => Container(
         padding: const EdgeInsets.all(16),
-        height: 200,
+        height: 250,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text("Notifications", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
+
+            // ✅ If no notifications, show "No new notifications"
+            if (notifier.notifications.isEmpty)
+              const Center(child: Text("No new notifications", style: TextStyle(fontSize: 16))),
+
+            // ✅ Show notifications
             Expanded(
               child: ListView.builder(
                 itemCount: notifier.notifications.length,
                 itemBuilder: (context, index) {
                   final notification = notifier.notifications[index];
                   return ListTile(
-                    title: Text(notification['message']),
-                    leading: Icon(notification['read'] ? Icons.check : Icons.mark_chat_unread),
+                    title: Text(
+                      "${notification['count']} new messages from ${notification['senderEmail']}",
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    leading: const Icon(Icons.mark_chat_unread),
                   );
                 },
               ),
             ),
+
+            // ✅ Mark all as read button
             ElevatedButton(
               onPressed: () {
                 notifier.markAllAsRead();
@@ -97,7 +109,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // ✅ List of Users (Unchanged)
+  // ✅ List of Users
   Widget _buildUserList() {
     return StreamBuilder(
       stream: _chatServices.getUsersStream(),

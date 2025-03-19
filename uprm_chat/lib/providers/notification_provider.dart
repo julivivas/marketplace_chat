@@ -1,19 +1,30 @@
 import 'package:flutter/material.dart';
 
 class NotificationProvider extends ChangeNotifier {
-  List<Map<String, dynamic>> _notifications = [
-    {"id": 1, "message": "2 new messages from Gerald", "read": false},
-    {"id": 2, "message": "New message from Alice", "read": false},
-  ];
+  List<Map<String, dynamic>> _notifications = [];
 
   List<Map<String, dynamic>> get notifications => _notifications;
+  int get unreadCount => _notifications.length;
 
-  int get unreadCount => _notifications.where((n) => !n['read']).length;
-
-  void markAllAsRead() {
-    for (var notification in _notifications) {
-      notification['read'] = true;
+  // ✅ Add new notifications (simulated when a message is sent)
+  void addNotification(String senderEmail) {
+    // If the sender already has an unread notification, increase the count
+    int index = _notifications.indexWhere((n) => n['senderEmail'] == senderEmail);
+    if (index != -1) {
+      _notifications[index]['count'] += 1;
+    } else {
+      _notifications.add({
+        'senderEmail': senderEmail,
+        'count': 1,
+        'read': false,
+      });
     }
+    notifyListeners();
+  }
+
+  // ✅ Mark all notifications as read
+  void markAllAsRead() {
+    _notifications.clear();
     notifyListeners();
   }
 }
