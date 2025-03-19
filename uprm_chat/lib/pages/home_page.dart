@@ -20,7 +20,7 @@ class HomePage extends StatelessWidget {
         title: const Text("Home", style: TextStyle(color: Colors.white)),
         backgroundColor: Theme.of(context).colorScheme.primary,
         actions: [
-          _buildNotificationIcon(context), // ✅ Add the notification icon
+          _buildNotificationIcon(context), // ✅ Notification icon in AppBar
         ],
       ),
       drawer: const MyDrawer(),
@@ -28,10 +28,12 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  // ✅ Adjusted Notification Icon Placement
   Widget _buildNotificationIcon(BuildContext context) {
     return Consumer<NotificationProvider>(
       builder: (context, notifier, child) {
         return Stack(
+          clipBehavior: Clip.none, // Prevents cut-off
           children: [
             IconButton(
               icon: const Icon(Icons.notifications),
@@ -41,14 +43,14 @@ class HomePage extends StatelessWidget {
             ),
             if (notifier.unreadCount > 0)
               Positioned(
-                right: 8,
+                right: 25, // ✅ Moves badge to the left
                 top: 8,
                 child: CircleAvatar(
-                  radius: 10,
+                  radius: 9, // ✅ Adjusted size
                   backgroundColor: Colors.red,
                   child: Text(
                     notifier.unreadCount.toString(),
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -58,6 +60,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  // ✅ Shows Notification Preview When Bell is Clicked
   void _showNotificationPreview(BuildContext context, NotificationProvider notifier) {
     showModalBottomSheet(
       context: context,
@@ -94,6 +97,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  // ✅ List of Users (Unchanged)
   Widget _buildUserList() {
     return StreamBuilder(
       stream: _chatServices.getUsersStream(),
@@ -110,6 +114,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  // ✅ Chat User List Item
   Widget _buildUserListItem(Map<String, dynamic> userData, BuildContext context) {
     if (userData['email'] != _authService.getCurrentUser()!.email) {
       return UserTile(
