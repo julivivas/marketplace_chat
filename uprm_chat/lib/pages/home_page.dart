@@ -28,12 +28,16 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // ✅ Adjusted Notification Icon Placement
+  // ✅ Notification Icon (bell + unread count)
   Widget _buildNotificationIcon(BuildContext context) {
+    String currentUserID = _authService.getCurrentUser()!.uid;
+
     return Consumer<NotificationProvider>(
       builder: (context, notifier, child) {
+        int unreadCount = notifier.getUnreadCountForUser(currentUserID);
+
         return Stack(
-          clipBehavior: Clip.none, // Prevents cut-off
+          clipBehavior: Clip.none,
           children: [
             IconButton(
               icon: const Icon(Icons.notifications),
@@ -41,16 +45,17 @@ class HomePage extends StatelessWidget {
                 _showNotificationPreview(context, notifier);
               },
             ),
-            if (notifier.unreadCount > 0)
+            if (unreadCount > 0)
               Positioned(
-                right: 25, // ✅ Moves badge to the left
-                top: 8,
+                right: 30, // ✅ Moves badge to the left
+                top: 10,
                 child: CircleAvatar(
                   radius: 9, // ✅ Adjusted size
                   backgroundColor: Colors.red,
                   child: Text(
-                    notifier.unreadCount.toString(),
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                    unreadCount.toString(),
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -62,31 +67,46 @@ class HomePage extends StatelessWidget {
 
   // ✅ Shows Notification Preview When Bell is Clicked
   void _showNotificationPreview(BuildContext context, NotificationProvider notifier) {
+    String currentUserID = _authService.getCurrentUser()!.uid;
+    List<Map<String, dynamic>> userNotifications =
+        notifier.getNotificationsForUser(currentUserID);
+
     showModalBottomSheet(
       context: context,
       builder: (context) => Container(
         padding: const EdgeInsets.all(16),
-        height: 200,
+        height: 250,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text("Notifications", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
+
+            // ✅ If no notifications, show "No new notifications"
+            if (userNotifications.isEmpty)
+              const Center(child: Text("No new notifications", style: TextStyle(fontSize: 16))),
+
+            // ✅ Show notifications for logged-in user only
             Expanded(
               child: ListView.builder(
-                itemCount: notifier.notifications.length,
+                itemCount: userNotifications.length,
                 itemBuilder: (context, index) {
-                  final notification = notifier.notifications[index];
+                  final notification = userNotifications[index];
                   return ListTile(
-                    title: Text(notification['message']),
-                    leading: Icon(notification['read'] ? Icons.check : Icons.mark_chat_unread),
+                    title: Text(
+                      "${notification['count']} new messages from ${notification['senderEmail']}",
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    leading: const Icon(Icons.mark_chat_unread),
                   );
                 },
               ),
             ),
+
+            // ✅ Mark all as read button (Clears only **this user's notifications**)
             ElevatedButton(
               onPressed: () {
-                notifier.markAllAsRead();
+                notifier.markAllAsRead(currentUserID); // ✅ Pass current user ID
                 Navigator.pop(context);
               },
               child: const Text("Mark all as read"),
@@ -97,7 +117,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // ✅ List of Users (Unchanged)
+  // ✅ List of Users
   Widget _buildUserList() {
     return StreamBuilder(
       stream: _chatServices.getUsersStream(),
