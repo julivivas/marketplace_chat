@@ -1,11 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:uprm_chat/models/message.dart';
+import 'package:uprm_chat/services/notification_service.dart';
+
 
 class ChatServices {
   //get instance of firestore & auth
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance; //user info
+  final NotificationService _notificationService = NotificationService(); // Add this
 
   //get user stream (in order to display user)
   /* 
@@ -37,32 +40,36 @@ class ChatServices {
 
   //methods for send message
   Future<void> sendMessage(String receiverID, message) async {
-    //get current user info
-    final String currentUserID = _auth.currentUser!.uid;
-    final String currentUserEmail = _auth.currentUser!.email!;
-    final Timestamp timestamp = Timestamp.now(); //when the message is send
+  // get current user info
+  final String currentUserID = _auth.currentUser!.uid;
+  final String currentUserEmail = _auth.currentUser!.email!;
+  final Timestamp timestamp = Timestamp.now(); // when the message is sent
 
-    //create a new message
-    Message newMessage = Message(
-      senderID: currentUserID,
-      senderEmail: currentUserEmail,
-      receiverID: receiverID,
-      message: message,
-      timestamp: timestamp,
-    );
-    //construct chat room ID for the two users (sorted to ensure uniqueness)
+  // create a new message
+  Message newMessage = Message(
+    senderID: currentUserID,
+    senderEmail: currentUserEmail,
+    receiverID: receiverID,
+    message: message,
+    timestamp: timestamp,
+  );
 
-    List<String> ids = [currentUserID, receiverID];
-    ids.sort(); // sort the ids ( this ensure teh chatroomID is the same for any 2 people)
-    String chatRoomID = ids.join('_');
+  // construct chat room ID for the two users (sorted to ensure uniqueness)
+  List<String> ids = [currentUserID, receiverID];
+  ids.sort(); // ensure the chat room ID is the same for any 2 people
+  String chatRoomID = ids.join('_');
 
-    //add new message to database
-    await _firestore
-        .collection("chat_rooms")
-        .doc(chatRoomID)
-        .collection("messages")
-        .add(newMessage.toMap());
-  }
+  // add new message to database
+  await _firestore
+      .collection("chat_rooms")
+      .doc(chatRoomID)
+      .collection("messages")
+      .add(newMessage.toMap());
+
+  // Send notification to receiver
+  await _notificationService.addNotification(receiverID, "New message from $currentUserEmail");
+}
+
 
   //get message
   Stream<QuerySnapshot> getMessages(String userID, otherUserID) {
