@@ -24,6 +24,9 @@ class _ChatPageState extends State<ChatPage> {
   final ScrollController _scrollController = ScrollController();
   FocusNode myFocusNode = FocusNode();
 
+  String? _editingMessageID;
+  String? _editingMessageText;
+
   @override
   void initState() {
     super.initState();
@@ -60,11 +63,21 @@ class _ChatPageState extends State<ChatPage> {
 
   void sendMessage() async {
     if (_messageController.text.isNotEmpty) {
-      await _chatServices.sendMessage(
-        widget.receiverID,
-        _messageController.text,
-        Provider.of<NotificationProvider>(context, listen: false),
-      );
+      if (_editingMessageID == null) {
+        // Send new message
+        await _chatServices.sendMessage(
+          widget.receiverID,
+          _messageController.text,
+          Provider.of<NotificationProvider>(context, listen: false),
+        );
+      } else {
+        // ✅ Edit existing message
+        await _chatServices.editMessage(widget.receiverID, _editingMessageID!, _messageController.text);
+        setState(() {
+          _editingMessageID = null;
+          _editingMessageText = null;
+        });
+      }
 
       _messageController.clear();
       scrollDown();
@@ -111,30 +124,44 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildMessageItem(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     bool isCurrentUser = data['senderID'] == _authService.getCurrentUser()!.uid;
+    Timestamp timestamp = data['timestamp'];
 
-    // ✅ Mark message as read when receiver opens the chat
-    if (!isCurrentUser && !(data['read'] ?? false)) {
-      _markMessageAsRead(doc.reference);
-    }
+    // ✅ Check if message is within 5-minute edit window
+    bool withinEditWindow =
+        DateTime.now().difference(timestamp.toDate()).inMinutes < 5;
 
-    return Column(
-      crossAxisAlignment: isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        ChatBubble(message: data["message"], isCurrentUser: isCurrentUser),
+    return GestureDetector(
+      onLongPress: isCurrentUser && withinEditWindow
+          ? () {
+              setState(() {
+                _editingMessageID = doc.id;
+                _editingMessageText = data['message'];
+                _messageController.text = _editingMessageText!;
+              });
+            }
+          : null,
+      child: Column(
+        crossAxisAlignment:
+            isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          ChatBubble(message: data["message"], isCurrentUser: isCurrentUser),
 
-        // ✅ Show "Read" indicator for sender if the message is read
-        if (isCurrentUser && (data['read'] ?? false))
-          const Padding(
-            padding: EdgeInsets.only(right: 8.0, top: 2),
-            child: Text("Read", style: TextStyle(fontSize: 12, color: Colors.grey)),
-          ),
-      ],
+          // ✅ Show "Edited" label if message was modified
+          if (isCurrentUser && (data['edited'] ?? false))
+            const Padding(
+              padding: EdgeInsets.only(right: 8.0, top: 2),
+              child: Text("Edited", style: TextStyle(fontSize: 12, color: Colors.grey)),
+            ),
+
+          // ✅ Show "Read" indicator for sender if the message is read
+          if (isCurrentUser && (data['read'] ?? false))
+            const Padding(
+              padding: EdgeInsets.only(right: 8.0, top: 2),
+              child: Text("Read", style: TextStyle(fontSize: 12, color: Colors.grey)),
+            ),
+        ],
+      ),
     );
-  }
-
-  // ✅ Mark message as read (should ideally be inside `chat_services.dart`)
-  Future<void> _markMessageAsRead(DocumentReference messageRef) async {
-    await messageRef.update({'read': true});
   }
 
   Widget _buildUserInput() {
@@ -144,7 +171,7 @@ class _ChatPageState extends State<ChatPage> {
         children: [
           Expanded(
             child: MyTextfield(
-              hintText: "Type a message",
+              hintText: _editingMessageID == null ? "Type a message" : "Edit message...",
               obscureText: false,
               controller: _messageController,
               focusNode: myFocusNode,
