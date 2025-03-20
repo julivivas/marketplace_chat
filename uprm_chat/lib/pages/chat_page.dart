@@ -112,10 +112,29 @@ class _ChatPageState extends State<ChatPage> {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     bool isCurrentUser = data['senderID'] == _authService.getCurrentUser()!.uid;
 
-    return Container(
-      alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: ChatBubble(message: data["message"], isCurrentUser: isCurrentUser),
+    // ✅ Mark message as read when receiver opens the chat
+    if (!isCurrentUser && !(data['read'] ?? false)) {
+      _markMessageAsRead(doc.reference);
+    }
+
+    return Column(
+      crossAxisAlignment: isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        ChatBubble(message: data["message"], isCurrentUser: isCurrentUser),
+
+        // ✅ Show "Read" indicator for sender if the message is read
+        if (isCurrentUser && (data['read'] ?? false))
+          const Padding(
+            padding: EdgeInsets.only(right: 8.0, top: 2),
+            child: Text("Read", style: TextStyle(fontSize: 12, color: Colors.grey)),
+          ),
+      ],
     );
+  }
+
+  // ✅ Mark message as read (should ideally be inside `chat_services.dart`)
+  Future<void> _markMessageAsRead(DocumentReference messageRef) async {
+    await messageRef.update({'read': true});
   }
 
   Widget _buildUserInput() {
