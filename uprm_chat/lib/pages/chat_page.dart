@@ -64,7 +64,7 @@ class _ChatPageState extends State<ChatPage> {
   void sendMessage() async {
     if (_messageController.text.isNotEmpty) {
       if (_editingMessageID == null) {
-        // Send new message
+        // ✅ Send new message
         await _chatServices.sendMessage(
           widget.receiverID,
           _messageController.text,
@@ -129,6 +129,11 @@ class _ChatPageState extends State<ChatPage> {
     // ✅ Check if message is within 5-minute edit window
     bool withinEditWindow =
         DateTime.now().difference(timestamp.toDate()).inMinutes < 5;
+
+    // ✅ Mark message as read when receiver opens the chat
+    if (!isCurrentUser && !(data['read'] ?? false)) {
+      _chatServices.markMessageAsRead(widget.receiverID, doc.id);
+    }
 
     return GestureDetector(
       onLongPress: isCurrentUser && withinEditWindow

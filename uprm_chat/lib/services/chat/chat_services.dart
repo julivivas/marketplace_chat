@@ -74,6 +74,21 @@ class ChatServices {
     }
   }
 
+  // ✅ Fix: Mark a message as read when the receiver sees it
+  Future<void> markMessageAsRead(String receiverID, String messageID) async {
+    List<String> ids = [_auth.currentUser!.uid, receiverID];
+    ids.sort();
+    String chatRoomID = ids.join('_');
+
+    DocumentReference messageRef = _firestore
+        .collection("chat_rooms")
+        .doc(chatRoomID)
+        .collection("messages")
+        .doc(messageID);
+
+    await messageRef.update({'read': true});
+  }
+
   // Get messages between two users
   Stream<QuerySnapshot> getMessages(String userID, String otherUserID) {
     List<String> ids = [userID, otherUserID];
