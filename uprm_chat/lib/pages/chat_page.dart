@@ -146,8 +146,8 @@ class _ChatPageState extends State<ChatPage> {
         children: [
           ChatBubble(message: data["message"], isCurrentUser: isCurrentUser),
 
-          // ✅ Show "Edited" label if message was modified
-          if (isCurrentUser && (data['edited'] ?? false))
+          // ✅ Show "Edited" label for BOTH sender & receiver
+          if (data['edited'] ?? false)
             const Padding(
               padding: EdgeInsets.only(right: 8.0, top: 2),
               child: Text("Edited", style: TextStyle(fontSize: 12, color: Colors.grey)),
