@@ -42,9 +42,51 @@ class ChatServices {
         .add(newMessage.toMap());
 
     // ✅ Fix: Add notification for **receiver** only
-    if (senderID != receiverID) { 
+    if (senderID != receiverID) {
       notifier.addNotification(receiverID, senderEmail); // Send only to receiver
     }
+  }
+
+  // ✅ Edit a message within 5 minutes of sending
+  Future<void> editMessage(String receiverID, String messageID, String newMessage) async {
+    List<String> ids = [_auth.currentUser!.uid, receiverID];
+    ids.sort();
+    String chatRoomID = ids.join('_');
+
+    DocumentReference messageRef = _firestore
+        .collection("chat_rooms")
+        .doc(chatRoomID)
+        .collection("messages")
+        .doc(messageID);
+
+    // ✅ Check if message exists and is within the 5-minute window
+    DocumentSnapshot doc = await messageRef.get();
+    if (!doc.exists) return;
+
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    Timestamp timestamp = data['timestamp'];
+
+    if (DateTime.now().difference(timestamp.toDate()).inMinutes < 5) {
+      await messageRef.update({
+        'message': newMessage,
+        'edited': true, // ✅ Mark as edited
+      });
+    }
+  }
+
+  // ✅ Fix: Mark a message as read when the receiver sees it
+  Future<void> markMessageAsRead(String receiverID, String messageID) async {
+    List<String> ids = [_auth.currentUser!.uid, receiverID];
+    ids.sort();
+    String chatRoomID = ids.join('_');
+
+    DocumentReference messageRef = _firestore
+        .collection("chat_rooms")
+        .doc(chatRoomID)
+        .collection("messages")
+        .doc(messageID);
+
+    await messageRef.update({'read': true});
   }
 
   // Get messages between two users
